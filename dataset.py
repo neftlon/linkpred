@@ -1,5 +1,6 @@
 import pandas as pd
 import networkx as nx
+import os
 
 def load_lnctard(filename: str = "data/lnctard2.0.txt", cols: list[str] = None):
   """
@@ -11,6 +12,21 @@ def load_lnctard(filename: str = "data/lnctard2.0.txt", cols: list[str] = None):
   lnctard = pd.read_csv(filename, sep="\t", encoding="latin-1")
   # TODO: decide whether we want to drop duplicates from the dataset here
   return lnctard[cols].drop_duplicates()
+
+def load_split(name: str):
+  """
+  Load a dataset split from the `data/` directory.
+  
+  Args:
+    name: Which split to take. Can be either `"train"`, `"val"`, `"test"`, or
+      `"full"`. The first three load the associated split if available, the
+      latter one loads the entire dataset.
+  """
+  filename = f"data/{'dataset' if name == 'full' else name}.tsv"
+  assert os.path.exists(filename), (
+    "cannot load split for %s, file not found" % name
+  )
+  return pd.read_csv(filename, sep="\t", encoding="latin-1")
 
 def df2nx(
   df, head="head", tail="tail", relation="relation", cc_mode: str = "largest"
