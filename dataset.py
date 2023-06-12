@@ -1,6 +1,27 @@
 import pandas as pd
 import networkx as nx
 import os
+from torch.utils import data as torch_data
+from torchdrug import data as torchdrug_data
+
+# this code is adjusted from https://github.com/DeepGraphLearning/torchdrug/blob/a959f68f0c19f368be9e380f5a587de6970b3c67/torchdrug/datasets/fb15k.py#L10
+class TdLncTarD(torchdrug_data.KnowledgeGraphDataset):
+  """
+  torchdrug representation of LncTarD dataset.
+  """
+  
+  def __init__(self, verbose=1):
+    splits = ["train", "val", "test"]
+    self.load_tsvs([f"data/{s}.tsv" for s in splits], verbose=verbose)
+  
+  def split(self):
+    offset = 0
+    splits = []
+    for num_sample in self.num_samples:
+      split = torch_data.Subset(self, range(offset, offset + num_sample))
+      splits.append(split)
+      offset += num_sample
+    return splits
 
 def load_lnctard(filename: str = "data/lnctard2.0.txt", cols: list[str] = None):
   """
@@ -60,5 +81,3 @@ def df2nx(
     return G, conn_comps
   else:
     raise ValueError("invalid `cc_mode` selected.")
-  
-  
