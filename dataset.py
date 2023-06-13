@@ -91,8 +91,10 @@ class PygLncTarD(InMemoryDataset):
   
   @property
   def edge_index(self):
-    """Return the edge indices of this dataset, as a tensor of (h,t) tuples."""
-    return self.tuples[:,[0,2]]
+    """
+    Return the edge indices of this dataset, as a tuple of heads and tails.
+    """
+    return self.tuples[:,[0,2]].T
   
   @property
   def edge_type(self):
