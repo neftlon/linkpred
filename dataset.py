@@ -4,7 +4,7 @@ import os
 import torch
 from torch.utils import data as torch_data
 from torchdrug import data as torchdrug_data
-from torch_geometric.data import InMemoryDataset
+#from torch_geometric.data import InMemoryDataset
 
 # this code is adjusted from https://github.com/DeepGraphLearning/torchdrug/blob/a959f68f0c19f368be9e380f5a587de6970b3c67/torchdrug/datasets/fb15k.py#L10
 class TdLncTarD(torchdrug_data.KnowledgeGraphDataset):
@@ -26,7 +26,7 @@ class TdLncTarD(torchdrug_data.KnowledgeGraphDataset):
       offset += num_sample
     return splits
 
-class PygLncTarD(InMemoryDataset):
+class PygLncTarD(torch_data.Dataset):
   """
   pytorch geometric compatible version of LncTarD dataset.
   
@@ -129,7 +129,8 @@ def load_split(name: str):
   return pd.read_csv(filename, sep="\t", encoding="latin-1")
 
 def df2nx(
-  df, head="head", tail="tail", relation="relation", cc_mode: str = "largest"
+  df, head="head", tail="tail", relation="relation", cc_mode: str = "largest",
+  creator = nx.DiGraph(), connection_policy=nx.weakly_connected_components
 ):
   """
   Convert columns of a pandas DataFrame to a nx.DiGraph.
@@ -146,11 +147,11 @@ def df2nx(
       belonging to each connection component. `"G"` returns the graph as is.
   """
   G = nx.from_pandas_edgelist(
-    df, source=head, target=tail, edge_attr=relation, create_using=nx.DiGraph(),
+    df, source=head, target=tail, edge_attr=relation, create_using=creator,
   )
   if cc_mode == "G":
     return G
-  conn_comps = sorted(nx.weakly_connected_components(G), key=len, reverse=True)
+  conn_comps = sorted(connection_policy(G), key=len, reverse=True)
   if cc_mode == "largest":
     assert len(conn_comps) > 0, (
       "provided graph does not contain weakly connected components"
