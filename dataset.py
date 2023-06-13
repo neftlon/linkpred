@@ -57,10 +57,11 @@ class PygLncTarD(InMemoryDataset):
     
     # NB: this is not a very efficient way of obtaining the dataset, but it
     # is sufficient for a small dataset like LncTarD.
-    self.tuples = torch.empty((len(self.df), 3), dtype=torch.long, device=device)
+    self.tuples = torch.zeros((len(self.df), 3), dtype=torch.long, device=device)
     num_failed = 0
     for tup in self.df.itertuples(index=True):
-      # TODO: figure out how we can ignore the weird string encodings
+      # TODO: figure out how we can ignore the weird string encodings, also we
+      #   need to clamp tuples to the appropriate size when doing this!!!
       try:
         h, r, t = self.ent2idx[tup.head], self.rel2idx[tup.relation], self.ent2idx[tup.tail]
         assert tup.Index < len(self.tuples), "tuple index out of range"
