@@ -1,0 +1,4 @@
+[submodule "NBFNet"]
+	path = NBFNet
+	url = https://github.com/neftlon/NBFNet.git
+	branch = ml4rg_linkpred
