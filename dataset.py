@@ -4,6 +4,7 @@ import os
 import torch
 from torch.utils import data as torch_data
 from torchdrug import data as torchdrug_data
+import pykeen
 #from torch_geometric.data import InMemoryDataset
 
 # this code is adjusted from https://github.com/DeepGraphLearning/torchdrug/blob/a959f68f0c19f368be9e380f5a587de6970b3c67/torchdrug/datasets/fb15k.py#L10
@@ -110,8 +111,34 @@ def load_lnctard(filename: str = "data/lnctard2.0.txt", cols: list[str] = None):
     cols = ["Regulator", "Target", "SearchregulatoryMechanism", 
             "RegulatorType", "TargetType"]
   lnctard = pd.read_csv(filename, sep="\t", encoding="latin-1")
-  # TODO: decide whether we want to drop duplicates from the dataset here
-  return lnctard[cols].drop_duplicates()
+  return lnctard[cols].drop_duplicates(ignore_index=True)
+  
+def create_splits(dataset, base_split=[.8,.1,.1], train_split=[.8,.2]):
+  """
+  Create four dataset splits.
+  
+  This function takes a dataset of shape (n,3), where each row corresponds to a
+  tuple (h,r,t) and splits it into four splits:
+  * first, a train, a validation, and a test split are created. It is ensured
+    that train contains every node at least once.
+  * second, train is split again, into a message passing and a supervision set.
+    Again, message passing contains each node at least once.
+    
+  Args:
+    dataset: array of n tuples (h,r,t)
+    base_split: the split ratios to create train, validation, and test
+    train_split: the split ratios to create message passing and supervision from
+      train
+  
+  Returns:
+    A tuple of the four splits: message passing, supervision, validation, and 
+    test.
+  """
+  base_tf = pykeen.triples.TriplesFactory.from_labeled_triples(dataset)
+  train, val, test = base_tf.split(base_split, random_state=1234)
+  train_tf = base_tf.clone_and_exchange_triples(train.mapped_triples)
+  message_passing, supervision = train_tf.split(train_split, random_state=1234)
+  return message_passing, supervision, val, test
 
 def load_split(name: str):
   """
@@ -130,7 +157,7 @@ def load_split(name: str):
 
 def df2nx(
   df, head="head", tail="tail", relation="relation", cc_mode: str = "largest",
-  creator = nx.DiGraph(), connection_policy=nx.weakly_connected_components
+  creator = nx.MultiDiGraph(), connection_policy=nx.weakly_connected_components
 ):
   """
   Convert columns of a pandas DataFrame to a nx.DiGraph.
