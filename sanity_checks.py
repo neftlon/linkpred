@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 DATA_PATH_PPI = "./NBFNet/data/lnctard/train1-ppi.txt"
 DATA_PATH_TEST = "./NBFNet/data/lnctard/test.txt"
@@ -16,7 +17,10 @@ def check_rel_distribution(path):
     df = pd.read_csv(path, names=["head", "relation", "tail"], sep="\t")
 
     #checks how many different nodepairs exist for each relation
-    rel_types = df.groupby(by="relation").nunique()
+    rel_types = df.groupby(by="relation").nunique().plot(
+    kind="bar",
+    ylabel="# of occurrences", rot=45,
+  )
 
     #checks how many samples exist for each relation
     rel_types_occurance = df.groupby(by='relation').size()
