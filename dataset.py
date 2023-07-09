@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 import pandas as pd
 import networkx as nx
 import os
@@ -113,7 +115,7 @@ def load_lnctard(filename: str = "data/lnctard2.0.txt", cols: list[str] = None):
   lnctard = pd.read_csv(filename, sep="\t", encoding="latin-1")
   return lnctard[cols].drop_duplicates(ignore_index=True)
   
-def create_splits(dataset, base_split=[.8,.1,.1], train_split=[.8,.2]):
+def create_splits(dataset, base_split=[.8,.1,.1], train_split: Optional[List[float]] = [.8, .2]):
   """
   Create four dataset splits.
   
@@ -136,9 +138,11 @@ def create_splits(dataset, base_split=[.8,.1,.1], train_split=[.8,.2]):
   """
   base_tf = pykeen.triples.TriplesFactory.from_labeled_triples(dataset)
   train, val, test = base_tf.split(base_split, random_state=1234)
-  train_tf = base_tf.clone_and_exchange_triples(train.mapped_triples)
-  message_passing, supervision = train_tf.split(train_split, random_state=1234)
-  return message_passing, supervision, val, test
+  if train_split is not None:
+    train_tf = base_tf.clone_and_exchange_triples(train.mapped_triples)
+    message_passing, supervision = train_tf.split(train_split, random_state=1234)
+    return message_passing, supervision, val, test
+  return train, val, test
 
 def load_split(name: str):
   """
