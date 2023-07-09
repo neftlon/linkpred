@@ -1,11 +1,14 @@
 # linkpred
 
-## Setup
+## GIT Submodule
 To run the nbfnet, you need to load a GIT submodule via the following commands: 
 ```
 git submodule init; git submodule update 
 ```
-
+To update the submodule use
+```
+git submodule update --remote --rebase
+```
 ## NBFNet container
 
 Use the following commands to build and run NBFNet in a docker container.
