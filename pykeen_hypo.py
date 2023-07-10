@@ -22,7 +22,8 @@ res = pd.DataFrame(
     columns=[
         'model', 'num_negs', 'batch_size', 'learning_rate', 'num_epochs',
         "hits_at_1", "hits_at_3", "hits_at_10", "arithmetic_mean_rank", "inverse_arithmetic_mean_rank"
-    ])
+    ]
+)
 
 for model in ["TransE", "RotatE"]:
     for num_negs_per_pos in [16, 32, 64, 128]:
@@ -55,4 +56,6 @@ for model in ["TransE", "RotatE"]:
                     "inverse_arithmetic_mean_rank": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "inverse_arithmetic_mean_rank"), "Value"].values[0]
                 }
                 print(new_record)
-                res = res.append(new_record)
+                res = res.append(new_record, ignore_index=True)
+
+res.to_csv("./pykeen_tuning_res.csv", sep="\t", index=False)
