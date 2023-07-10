@@ -17,22 +17,25 @@ df = df[["Regulator", "SearchregulatoryMechanism", "Target"]]
 df = df[df["Regulator"].isin(df["Regulator"].value_counts().loc[lambda x: x > 1].index)].drop_duplicates().reset_index(drop=True).to_numpy()
 tf = TriplesFactory.from_labeled_triples(df)
 training, valid, testing = tf.split([0.8, 0.1, 0.1], random_state=1234)
+
+
 transe_hypo = hpo_pipeline(
     training=training,
     validation=valid,
     testing=testing,
     device="cuda",
     model="TransE",
-    model_kwargs=dict(embedding_dim=512),
-    training_kwargs=dict(use_tqdm_batch=False, num_epochs=200),
     n_trials=50,
-    training_kwargs_ranges=dict(
-        batch_size=dict(type='categorical', choices=[32, 64, 128, 256, 512, 1024], log=True)
-        # batch_size=dict(type='categorical', choices=[32, 64], log=True)
-    ),
-    evaluation_kwargs=dict(use_tqdm=False),
-    negative_sampler_kwargs_ranges=dict(
-        num_negs_per_pos=dict(type='categorical', choices=[16, 32, 64, 128], log=True)
-        # num_negs_per_pos=dict(type='categorical', choices=[16, 32], log=True)
+    sampler=GridSampler,
+    sampler_kwargs=dict(
+        search_space={
+            "model.embedding_dim": [512],
+            "model.scoring_fct_norm": [2],
+            "loss.margin": [1.0],
+            "optimizer.lr": [1.0e-03, 1.0e-04],
+            "negative_sampler.num_negs_per_pos": [16, 32, 64, 128],
+            "training.num_epochs": [300],
+            "training.batch_size": [32, 64, 128, 256, 512, 1024],
+        },
     ),
 )
