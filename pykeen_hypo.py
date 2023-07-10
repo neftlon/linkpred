@@ -18,24 +18,41 @@ df = df[df["Regulator"].isin(df["Regulator"].value_counts().loc[lambda x: x > 1]
 tf = TriplesFactory.from_labeled_triples(df)
 training, valid, testing = tf.split([0.8, 0.1, 0.1], random_state=1234)
 
+res = pd.DataFrame(
+    columns=[
+        'model', 'num_negs', 'batch_size', 'learning_rate', 'num_epochs',
+        "hits_at_1", "hits_at_3", "hits_at_10", "arithmetic_mean_rank", "inverse_arithmetic_mean_rank"
+    ])
 
-transe_hypo = hpo_pipeline(
-    training=training,
-    validation=valid,
-    testing=testing,
-    device="cuda",
-    model="TransE",
-    n_trials=50,
-    sampler=GridSampler,
-    sampler_kwargs=dict(
-        search_space={
-            "model.embedding_dim": [512],
-            "model.scoring_fct_norm": [2],
-            "loss.margin": [1.0],
-            "optimizer.lr": [1.0e-03, 1.0e-04],
-            "negative_sampler.num_negs_per_pos": [16, 32, 64, 128],
-            "training.num_epochs": [300],
-            "training.batch_size": [32, 64, 128, 256, 512, 1024],
-        },
-    ),
-)
+for model in ["TransE", "RotatE"]:
+    for num_negs_per_pos in [16, 32, 64, 128]:
+        for batch_size in [32, 64, 128, 256, 512, 1024]:
+            for lr, num_epochs in [(0.001, 200), (0.0001, 300)]:
+                transe = pipeline(
+                    training=training,
+                    validation=valid,
+                    testing=testing,
+                    model=model,
+                    model_kwargs=dict(embedding_dim=512),
+                    training_kwargs=dict(use_tqdm_batch=False, num_epochs=num_epochs, batch_size=batch_size),
+                    evaluation_kwargs=dict(use_tqdm=False),
+                    optimizer_kwargs=dict(lr=lr),
+                    negative_sampler_kwargs=dict(num_negs_per_pos=num_negs_per_pos),
+                    random_seed=1,
+                    device="cuda",
+                )
+                metric = transe.metric_results.to_df()
+                new_record = {
+                    'model': model,
+                    'num_negs': num_negs_per_pos,
+                    'batch_size': batch_size,
+                    'learning_rate': lr,
+                    'num_epochs': num_epochs,
+                    "hits_at_1": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "hits_at_1"), "Value"].values[0],
+                    "hits_at_3": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "hits_at_3"), "Value"].values[0],
+                    "hits_at_10": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "hits_at_10"), "Value"].values[0],
+                    "arithmetic_mean_rank": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "arithmetic_mean_rank"), "Value"].values[0],
+                    "inverse_arithmetic_mean_rank": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "inverse_arithmetic_mean_rank"), "Value"].values[0]
+                }
+                print(new_record)
+                res = res.append(new_record)
