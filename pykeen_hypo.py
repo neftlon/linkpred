@@ -53,7 +53,7 @@ for model in ["TransE", "RotatE"]:
                     "hits_at_3": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "hits_at_3"), "Value"].values[0],
                     "hits_at_10": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "hits_at_10"), "Value"].values[0],
                     "arithmetic_mean_rank": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "arithmetic_mean_rank"), "Value"].values[0],
-                    "inverse_arithmetic_mean_rank": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "inverse_arithmetic_mean_rank"), "Value"].values[0]
+                    "inverse_harmonic_mean_rank": metric.loc[(metric.Side == "both") & (metric.Type == "realistic") & (metric.Metric == "inverse_harmonic_mean_rank"), "Value"].values[0]
                 }
                 print(new_record)
                 res = res.append(new_record, ignore_index=True)
