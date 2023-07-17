@@ -21,13 +21,13 @@ training, valid, testing = tf.split([0.8, 0.1, 0.1], random_state=1234)
 res = pd.DataFrame(
     columns=[
         'model', 'num_negs', 'batch_size', 'learning_rate', 'num_epochs',
-        "hits_at_1", "hits_at_3", "hits_at_10", "arithmetic_mean_rank", "inverse_arithmetic_mean_rank"
+        "hits_at_1", "hits_at_3", "hits_at_10", "arithmetic_mean_rank", "inverse_harmonic_mean_rank"
     ]
 )
 
 for model in ["TransE", "RotatE"]:
-    for num_negs_per_pos in [16, 128]:
-        for batch_size in [ 128, 256]:
+    for num_negs_per_pos in [16, 32, 64, 128]:
+        for batch_size in [32, 64, 128, 256, 512, 1024]:
             for lr, num_epochs in [(0.001, 200), (0.0001, 300)]:
                 transe = pipeline(
                     training=training,
